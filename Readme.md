@@ -1,4 +1,4 @@
-# Bash script: keepass-backup
+# Bash Script: keepass-backup
 
 This bash script is used to create a daily backup of my KeePass2 database in a subfolder. I use it with anacron (additional tool to cron). But you can also use it for other backups of single files.
 
