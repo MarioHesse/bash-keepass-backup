@@ -4,7 +4,7 @@
 FOLDER=/home/mario/Dropbox/keepass      # Ordner, in dem die Datei liegt
 FILE=mh-pw.kdbx                         # Datei, die zum Backup vorgesehen ist
 BACKUP_SUBFOLDER=Backup                 # Unterordner, in dem das Backup abgelegt werden soll
-DATE="$(date +"%F")_$(date +"%T")"      # Format des Zeitstempels für den Backup-Dateinamen
+DATE="$(date +"%F")_$(date +"%H%M%S")"  # Format des Zeitstempels für den Backup-Dateinamen
 
 
 # Standardmäßig -> Backuptyp "Täglich" (daily-backup)
@@ -26,7 +26,7 @@ fi
 # Erstellen aller vollständigen Pfade
 BACKUP_FOLDER="$FOLDER/$BACKUP_SUBFOLDER"      # Pfad zum Backupordner
 FROM="$FOLDER/$FILE"                           # Pfad zur Originaldatei
-TO="$BACKUP_FOLDER/$DATE-$TYPE-backup:$FILE"   # Pfad zur Backupdatei
+TO="$BACKUP_FOLDER/${DATE}_${TYPE}-backup_$FILE"   # Pfad zur Backupdatei
 
 
 # Prüfen, ob der Backupunterordner bereits angelegt ist und falls nicht, ggf. erstellen
