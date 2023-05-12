@@ -1,55 +1,72 @@
 #!/usr/bin/env zsh
 
-# User Einstellungen
-FOLDER=/home/mario/Dropbox/keepass      # Ordner, in dem die Datei liegt
-FILE=mh-pw.kdbx                         # Datei, die zum Backup vorgesehen ist
-BACKUP_SUBFOLDER=Backup                 # Unterordner, in dem das Backup abgelegt werden soll
-DATE="$(date +"%F_W%W_%H%M%S")"         # Format des Zeitstempels für den Backup-Dateinamen
+# User Settings
+LOCATION=/home/mario/Nextcloud/Gespensterfisch/keepass  # location of the backup file
+BACKUP_FILE=mh-pw.kdbx                                  # name of the backup file
+BACKUP_FOLDER=Backup                                    # subfolder to store the backup in
+BACKUP_DATE="$(date +"%F_W%W_%H%M%S")"                  # time stamp for the backup
 
 
-# Erstellen aller vollständigen Pfade
-BACKUP_FOLDER="$FOLDER/$BACKUP_SUBFOLDER"           # Pfad zum Backupordner
-FROM="$FOLDER/$FILE"                                # Pfad zur Originaldatei
+# create path to backup location
+BACKUP_LOCATION="$LOCATION/$BACKUP_FOLDER"
+
+# backup type ist per default "none" - no backup will be stored
+TYPE="none"
 
 # Daily
-#   Standardmäßig wird ein tägliches Backup erstellt (daily-backup)
-TYPE="daily"
+#   In case there is no file with the actual year, month and day
+#   with the type "daily" a new daily-backup will be stored
+if [[ "$(ls -1 ${BACKUP_LOCATION}/$(date +"%Y-%m-%d")*daily*$BACKUP_FILE | wc -l)" == "0" ]]
+then
+  TYPE="daily"
+fi
 
 # Weekly
-#   Falls noch keine Datei mit dem aktuellen Jahr, der aktuellen Woche und dem Tag
-#   "weekly" existiert, wird ein weekly-backup angelegt
-if ! [[ "$(ls -1 ${BACKUP_FOLDER}/$(date +"%Y")*$(date +"W%W")*weekly*$FILE | wc -l)" > "0" ]]
+#   In case there is no file with the actual year and week
+#   with the type "weekly" a new weekly-backup will be stored
+if [[ "$(ls -1 ${BACKUP_LOCATION}/$(date +"%Y")*$(date +"W%W")*weekly*$BACKUP_FILE | wc -l)" == "0" ]]
 then
   TYPE="weekly"
 fi
 
 # Monthly
-#   Falls noch keine Datei mit dem aktuellen Jahr, dem aktuellen Monat und dem Tag
-#   "monthly" existiert, wird ein monthly-backup angelegt
-if ! [[ "$(ls -1 ${BACKUP_FOLDER}/$(date +"%Y-%m")*monthly*$FILE | wc -l)" > "0" ]]
+#   In case there is no file with the actual year and month
+#   with the type "monthly" a new mothly-backup will be stored
+if [[ "$(ls -1 ${BACKUP_LOCATION}/$(date +"%Y-%m")*monthly*$BACKUP_FILE | wc -l)" == "0" ]]
 then
   TYPE="monthly"
 fi
 
 # Yearly
-#   Falls noch keine Datei mit dem aktuellen Jahr und dem Tag "yearly" existiert,
-#   wird ein yearly-backup angelegt
-if ! [[ "$(ls -1 ${BACKUP_FOLDER}/$(date +"%Y")*yearly*$FILE | wc -l)" > "0" ]]
+#   In case there is no file with the actual year
+#   with the type "yearly" a new yearly-backup will be stored
+if [[ "$(ls -1 ${BACKUP_LOCATION}/$(date +"%Y")*yearly*$BACKUP_FILE | wc -l)" == "0" ]]
 then
   TYPE="yearly"
 fi
 
-TO="$BACKUP_FOLDER/${DATE}_${TYPE}-backup_$FILE"    # Pfad zur Backupdatei
 
-
-# Prüfen, ob der Backupunterordner bereits angelegt ist und falls nicht, ggf. erstellen
-if ! [[ -d "$BACKUP_FOLDER" ]]
+# Create Backup, if it is not "none"
+#   else do nothing
+if ! [[ "$TYPE" == "none" ]]
 then
-  mkdir "$BACKUP_FOLDER/"
+
+  FROM="$LOCATION/$BACKUP_FILE"                                       # path to original file
+  TO="$BACKUP_LOCATION/${BACKUP_DATE}_${TYPE}-backup_$BACKUP_FILE"    # path to backup file
+
+
+  # check existens of backup folder, in case its not existing create it
+  if ! [[ -d "$BACKUP_LOCATION" ]]
+  then
+    mkdir "$BACKUP_LOCATION/"
+  fi
+
+  # create backup (copy file) → status will be printed out
+  COPY_OUTPUT=$(cp -v "$FROM" "$TO")
+
+  # print copy status to log file
+  echo "$BACKUP_DATE: $COPY_OUTPUT" >> "$BACKUP_LOCATION/$BACKUP_FOLDER.log"
+
+else
+  echo "Backup alredy exists - nothing to do here! :-)"
 fi
-
-# Backup anlegen (Kopieren der Datei → Statusausgabe wird in Variable geschrieben)
-COPY_OUTPUT=$(cp -v "$FROM" "$TO")
-
-# Ausgabe des Kopierstatus mit Datum in einem Log-File
-echo "$DATE: $COPY_OUTPUT" >> "$BACKUP_FOLDER/$BACKUP_SUBFOLDER.log"
